@@ -1,0 +1,40 @@
+name: Deploy FastAPI to AWS EC2
+
+on:
+  push:
+    branches:
+      - main # Deploys when code is pushed to `main`
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: |
+          pytest  # Runs test before deploying
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/app  # Change to your project directory
+            git pull origin main  # Pull latest changes
+            source venv/bin/activate  # Activate virtual environment
+            pip install -r requirements.txt  # Install dependencies
+            sudo systemctl restart fastapi  # Restart FastAPI service
