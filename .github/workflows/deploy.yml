@@ -15,34 +15,11 @@ jobs:
 
       - name: Setup SSH Key and Connect to EC2
         run: |
-          # Create SSH directory
-          mkdir -p ~/.ssh
 
-          # Decode the private key stored in GitHub Secrets and save it as a file
-          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          # Add EC2 host to known hosts to avoid prompt issues
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
-
-          # Connect to EC2 and deploy the app
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            # Navigate to the application directory
-            cd /home/ubuntu/app
-
-            # Fetch the latest code
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/fast-api_book.pem ubuntu@16.171.42.11 << 'EOF'
+             cd /home/ubuntu/fastapi-book-project
             git pull origin main
-
-            # Activate the virtual environment
             source venv/bin/activate
-
-            # Install dependencies
-            pip install --upgrade pip
             pip install -r requirements.txt
-
-            # Restart the FastAPI service
-            sudo systemctl restart fastapi
-
-            # Confirm service status
-            sudo systemctl status fastapi --no-pager
+            systemctl restart fastapi
           EOF
