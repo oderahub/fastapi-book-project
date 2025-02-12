@@ -12,17 +12,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Decode Private Key
+      - name: Set up SSH Key
         run: |
-          echo "${{ secrets.EC2_PRIVATE_KEY_B64 }}" | base64 --decode > ~/.ssh/deploy_key
+          echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/ubuntu/app
-            git pull origin main
-            source venv/bin/activate
-            pip install -r requirements.txt
-            sudo systemctl restart fastapi
+            cd /home/ubuntu/app || exit 1
+            git pull origin main || exit 1
+            source venv/bin/activate || exit 1
+            pip install -r requirements.txt || exit 1
+            sudo systemctl restart fastapi || exit 1
           EOF
