@@ -3,38 +3,26 @@ name: Deploy FastAPI to AWS EC2
 on:
   push:
     branches:
-      - main # Deploys when code is pushed to `main`
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Dependencies
+      - name: Decode Private Key
         run: |
-          pip install -r requirements.txt
+          echo "${{ secrets.EC2_PRIVATE_KEY_B64 }}" | base64 --decode > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
-      - name: Run Tests
+      - name: Deploy to EC2
         run: |
-          pytest  # Runs test before deploying
-
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-            cd /home/ubuntu/app  # Change to your project directory
-            git pull origin main  # Pull latest changes
-            source venv/bin/activate  # Activate virtual environment
-            pip install -r requirements.txt  # Install dependencies
-            sudo systemctl restart fastapi  # Restart FastAPI service
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/app
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt
+            sudo systemctl restart fastapi
+          EOF
