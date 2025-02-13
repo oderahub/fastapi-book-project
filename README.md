@@ -49,8 +49,8 @@ fastapi-book-project/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/hng12-devbotops/fastapi-book-project.git
-cd fastapi-book-project
+ git clone https://github.com/oderahub/fastapi-book-project.git
+ cd fastapi-book-project
 ```
 
 2. Create a virtual environment:
